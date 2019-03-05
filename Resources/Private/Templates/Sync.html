@@ -1,0 +1,20 @@
+    <table id="masterrecord-table" class="table table-bordered table-condensed" data-tablename="{table}" data-uid="{uid}">
+    <f:for each="{insight.differences}" as="difference" key="fieldName">
+        <tr>
+            <td>{fieldName}</td>
+            <td><pre>{difference.differenceValue -> f:format.raw()}</pre></td>
+            <td>
+                <input type="checkbox" class="checkbox-input masterrecord-fieldname-checkbox" name="masterrecord_fields[]" value="{fieldName}" id="masterrecord-fieldnames-{fieldName}" />
+            </td>
+        </tr>
+    </f:for>
+        <tfood>
+            <tr>
+                <td></td>
+                <td></td>
+                <td>
+                    <button id="masterrecord-sync-button" type="button" class="btn btn-primary">{f:translate(key: 'view.sync.sync_button')}</button>
+                </td>
+            </tr>
+        </tfood>
+    </table>

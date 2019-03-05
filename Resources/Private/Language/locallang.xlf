@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<xliff version="1.0">
+	<file source-language="en" datatype="plaintext" original="messages" product-name="testing" date="2016-10-19T16:04:15-04:00">
+		<header/>
+		<body>
+			<trans-unit id="tt_content.tx_masterrecord_tab">
+				<source>Master record</source>
+			</trans-unit>
+			<trans-unit id="tt_content.tx_masterrecord_sync">
+				<source>Data synchronisation</source>
+			</trans-unit>
+			<trans-unit id="view.sync.sync_button">
+				<source>Sync selected</source>
+			</trans-unit>
+		</body>
+	</file>
+</xliff>
