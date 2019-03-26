@@ -12,19 +12,35 @@ class TcaHelper
         ExtensionManagementUtility::addTCAcolumns(
             $table,
             [
-                't3_origuid' => [
-                    'label' => 'LLL:EXT:master_record/Resources/Private/Language/locallang.xlf:tt_content.tx_masterrecord_sync',
+                'tx_masterrecord_instanceof' => [
+                    'label' => 'LLL:EXT:master_record/Resources/Private/Language/locallang.xlf:tt_content.tx_masterrecord_instanceof',
+                    'displayCond' => 'FIELD:tx_masterrecord_master:<:1',
                     'config' => [
                         'type' => 'user',
-                        'userFunc' => TcaFieldRenderer::class . '->renderField',
+                        'userFunc' => TcaFieldRenderer::class . '->renderMasterInstanceSelector',
                     ]
+                ],
+                'tx_masterrecord_master' => [
+                    'label' => 'LLL:EXT:master_record/Resources/Private/Language/locallang.xlf:tt_content.tx_masterrecord_master',
+                    'config' => [
+                        'type' => 'check',
+                    ],
+                    'displayCond' => 'FIELD:tx_masterrecord_instanceof:<:1',
+                ],
+                'tx_masterrecord_instances' => [
+                    'label' => 'LLL:EXT:master_record/Resources/Private/Language/locallang.xlf:tt_content.tx_masterrecord_instances',
+                    'config' => [
+                        'type' => 'user',
+                        'userFunc' => TcaFieldRenderer::class . '->renderListOfInstances',
+                    ],
+                    'displayCond' => 'FIELD:tx_masterrecord_master:>:0',
                 ],
             ]
         );
 
         ExtensionManagementUtility::addToAllTCAtypes(
             $table,
-            ',--div--;LLL:EXT:master_record/Resources/Private/Language/locallang.xlf:tt_content.tx_masterrecord_tab,t3_origuid'
+            ',--div--;LLL:EXT:master_record/Resources/Private/Language/locallang.xlf:tt_content.tx_masterrecord_tab,tx_masterrecord_master,tx_masterrecord_instances,tx_masterrecord_instanceof'
         );
     }
 }

@@ -5,6 +5,7 @@ namespace NamelessCoder\MasterRecord;
 
 use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
+use TYPO3\CMS\Frontend\Page\PageRepository;
 
 class RecordInsight
 {
@@ -66,7 +67,7 @@ class RecordInsight
         $queryBuilder = GeneralUtility::makeInstance(ConnectionPool::class)->getQueryBuilderForTable($this->table);
         $result = $queryBuilder->select('*')
             ->from($this->table)
-            ->where($queryBuilder->expr()->eq('t3_origuid', $queryBuilder->createNamedParameter($this->record['uid'], \PDO::PARAM_INT)))
+            ->where($queryBuilder->expr()->eq('tx_masterrecord_instanceof', $queryBuilder->createNamedParameter($this->record['uid'], \PDO::PARAM_INT)))
             ->execute();
         while ($instanceRecord = $result->fetch()) {
             yield new static($this->table, $instanceRecord, $this->record);
@@ -82,11 +83,6 @@ class RecordInsight
         return new RecordInsight($this->table, $masterRecord);
     }
 
-    public function getStatus(): RecordStatus
-    {
-        return new RecordStatus($this);
-    }
-
     public function readMasterValue(string $fieldName)
     {
         $this->fetchMasterRecordWithoutRestriction();
@@ -100,7 +96,7 @@ class RecordInsight
 
     public function readDifferenceForField(string $fieldName): FieldDifference
     {
-        return new FieldDifference($this, $fieldName);
+        return new FieldDifference($this, $fieldName, $GLOBALS['TCA'][$this->table]['columns'][$fieldName]['config']['type'] === 'flex');
     }
 
     protected function fetchColumnsToIgnore(): array
@@ -111,9 +107,10 @@ class RecordInsight
                     [$GLOBALS['TCA'][$this->table]['ctrl']['delete'], $GLOBALS['TCA'][$this->table]['ctrl']['type']],
                     [$GLOBALS['TCA'][$this->table]['ctrl']['descriptionColumn'], $GLOBALS['TCA'][$this->table]['ctrl']['editlock']],
                     (array)$GLOBALS['TCA'][$this->table]['ctrl']['enableColumns'],
-                    ['l18n_diffsource'],
+                    ['pid', 'l18n_diffsource', 'tx_masterrecord_instanceof', 'tx_masterrecord_instances', 'tx_masterrecord_master', '_LOCALIZED_UID'],
                     [$GLOBALS['TCA'][$this->table]['ctrl']['languageField'], $GLOBALS['TCA'][$this->table]['ctrl']['tstamp'], $GLOBALS['TCA'][$this->table]['ctrl']['crdate']],
-                    [$GLOBALS['TCA'][$this->table]['ctrl']['cruser_id'], $GLOBALS['TCA'][$this->table]['ctrl']['sortby'], 'uid', 't3_origuid', 'tx_masterrecord_sync']
+                    [$GLOBALS['TCA'][$this->table]['ctrl']['cruser_id'], $GLOBALS['TCA'][$this->table]['ctrl']['sortby'], 'uid', 't3_origuid', 'tx_masterrecord_sync'],
+                    [$GLOBALS['TCA'][$this->table]['ctrl']['translationSource'], $GLOBALS['TCA'][$this->table]['ctrl']['transOrigDiffSourceField'], $GLOBALS['TCA'][$this->table]['ctrl']['transOrigPointerField']]
                 )
             );
         }
@@ -127,7 +124,7 @@ class RecordInsight
             $queryBuilder->getRestrictions()->removeAll();
             $this->master = $queryBuilder->select('*')
                 ->from($this->table)
-                ->where($queryBuilder->expr()->eq('uid', $queryBuilder->createNamedParameter($this->record['t3_origuid'], \PDO::PARAM_INT)))
+                ->where($queryBuilder->expr()->eq('uid', $queryBuilder->createNamedParameter($this->record['tx_masterrecord_instanceof'], \PDO::PARAM_INT)))
                 ->setMaxResults(1)
                 ->execute()
                 ->fetch();
@@ -141,6 +138,7 @@ class RecordInsight
                     1551139601
                 );
             }
+            $this->master = GeneralUtility::makeInstance(PageRepository::class)->getLanguageOverlay($this->table, $this->master) ?? $this->master;
         }
         return $this->master;
     }

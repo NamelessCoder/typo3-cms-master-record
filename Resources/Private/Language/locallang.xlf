@@ -9,6 +9,15 @@
 			<trans-unit id="tt_content.tx_masterrecord_sync">
 				<source>Data synchronisation</source>
 			</trans-unit>
+			<trans-unit id="tt_content.tx_masterrecord_instanceof">
+				<source>Instance of master record</source>
+			</trans-unit>
+			<trans-unit id="tt_content.tx_masterrecord_instances">
+				<source>Instances of this master</source>
+			</trans-unit>
+			<trans-unit id="tt_content.tx_masterrecord_master">
+				<source>Is master record?</source>
+			</trans-unit>
 			<trans-unit id="view.sync.sync_button">
 				<source>Sync selected</source>
 			</trans-unit>
