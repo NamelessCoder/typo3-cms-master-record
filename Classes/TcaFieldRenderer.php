@@ -13,22 +13,19 @@ class TcaFieldRenderer
 {
     public function renderListOfInstances(array $parameters)
     {
-        $queryBuilder = GeneralUtility::makeInstance(ConnectionPool::class)->getQueryBuilderForTable($parameters['table']);
-        $queryBuilder->getRestrictions()->removeAll()->add(GeneralUtility::makeInstance(DeletedRestriction::class));
-        $instanceRecords = $queryBuilder->select('*')
-            ->from($parameters['table'])
-            ->where($queryBuilder->expr()->eq('tx_masterrecord_instanceof', $queryBuilder->createNamedParameter($parameters['row']['uid'], \PDO::PARAM_INT)))
-            ->execute()
-            ->fetchAll();
         $content = '<h5>Instances</h5>';
-        if (empty($instanceRecords)) {
+        $generator = GeneralUtility::makeInstance(RecordInsight::class, $parameters['table'], $parameters['row'])->getInstances();
+        if (!$generator->valid()) {
             $content .= '<i>No instances exist of this master</i>';
             return $content;
         }
+
         $content .= '<ul>';
-        foreach ($instanceRecords as $instanceRecord) {
+        foreach ($generator as $instanceRecordInsight) {
+            $instanceUid = $instanceRecordInsight->readInstanceValue('uid');
+            $instancePid = $instanceRecordInsight->readInstanceValue('pid');
             $parameters = [
-                'edit' => [$parameters['table'] => [$instanceRecord['uid'] => 'edit']],
+                'edit' => [$parameters['table'] => [$instanceUid => 'edit']],
                 'returnUrl' => $_SERVER['REQUEST_URI'],
             ];
             $uriBuilder = GeneralUtility::makeInstance(UriBuilder::class);
@@ -36,14 +33,15 @@ class TcaFieldRenderer
             $content .= sprintf(
                 '<li><a href="%s">%s</a></li>',
                 $uri,
-                BackendUtility::getRecordTitle('tt_content', $instanceRecord)
-                    . ' (uid ' . $instanceRecord['uid'] . ') on page '
-                    . BackendUtility::getRecordPath($instanceRecord['pid'], '1=1', 0, 0)
-                    . ' (pid ' . $instanceRecord['pid'] . ')'
+                ($instanceRecordInsight->readInstanceValue('header') ?: '[No title]')
+                    . ' (uid ' . $instanceUid . ') on page '
+                    . BackendUtility::getRecordPath($instancePid, '1=1', 0, 0)
+                    . ' (pid ' . $instancePid . ')'
 
             );
         }
         $content .= '</ul>';
+
         return $content;
     }
 

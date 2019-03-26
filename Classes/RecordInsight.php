@@ -3,7 +3,9 @@ declare(strict_types=1);
 
 namespace NamelessCoder\MasterRecord;
 
+use Doctrine\DBAL\Connection;
 use TYPO3\CMS\Core\Database\ConnectionPool;
+use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Frontend\Page\PageRepository;
 
@@ -62,14 +64,19 @@ class RecordInsight
         }
     }
 
+    /**
+     * @return \Generator|static[]
+     */
     public function getInstances(): \Generator
     {
         $queryBuilder = GeneralUtility::makeInstance(ConnectionPool::class)->getQueryBuilderForTable($this->table);
+        $queryBuilder->getRestrictions()->removeAll()->add(GeneralUtility::makeInstance(DeletedRestriction::class));
         $result = $queryBuilder->select('*')
             ->from($this->table)
             ->where($queryBuilder->expr()->eq('tx_masterrecord_instanceof', $queryBuilder->createNamedParameter($this->record['uid'], \PDO::PARAM_INT)))
+            ->andWhere($queryBuilder->expr()->in('sys_language_uid', $queryBuilder->createNamedParameter([-1, 0], Connection::PARAM_INT_ARRAY)))
             ->execute();
-        while ($instanceRecord = $result->fetch()) {
+        while (($instanceRecord = $result->fetch())) {
             yield new static($this->table, $instanceRecord, $this->record);
         }
     }
