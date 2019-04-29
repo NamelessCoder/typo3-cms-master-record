@@ -1,8 +1,11 @@
 <?php
 defined('TYPO3_MODE') or die('Access denied.');
 
-(function() {
-    if (!(TYPO3_REQUESTTYPE & TYPO3_REQUESTTYPE_INSTALL)) {
+(function($conf) {
+    $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['master_record']['setup'] = unserialize($conf);
+
+    if (!(TYPO3_REQUESTTYPE & TYPO3_REQUESTTYPE_INSTALL) && !empty($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['master_record']['setup']['newContentWizardGroups'])) {
+
         $GLOBALS['TYPO3_CONF_VARS']['SC_OPTIONS']['tslib/class.tslib_content.php']['postInit'][] = \NamelessCoder\MasterRecord\Hooks\ContentObjectPostInit::class;
         if (TYPO3_REQUESTTYPE & TYPO3_REQUESTTYPE_BE) {
             $queryBuilder = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(\TYPO3\CMS\Core\Database\ConnectionPool::class)->getQueryBuilderForTable('tt_content');
@@ -10,25 +13,30 @@ defined('TYPO3_MODE') or die('Access denied.');
                 ->from('tt_content')
                 ->where($queryBuilder->expr()->eq('tx_masterrecord_master', $queryBuilder->createNamedParameter(1, \PDO::PARAM_INT)))
                 ->andWhere($queryBuilder->expr()->in('sys_language_uid', $queryBuilder->createNamedParameter([-1, 0], \Doctrine\DBAL\Connection::PARAM_INT_ARRAY)))
+                ->andWhere($queryBuilder->expr()->neq('tx_masterrecord_group', $queryBuilder->createNamedParameter('', \PDO::PARAM_STR)))
                 ->execute()
                 ->fetchAll();
 
-            $groupName = 'masters';
+            $groupNames = array_column($masterInstances, 'tx_masterrecord_group');
+            foreach ($groupNames as $groupName) {
+                $sanitizedGroupName = \NamelessCoder\MasterRecord\TcaHelper::sanitizeGroupName($groupName);
+                \TYPO3\CMS\Core\Utility\ExtensionManagementUtility::addPageTSConfig(
+                    sprintf(
+                        '
+                        mod.wizards.newContentElement.wizardItems.%s.header = %s
+                        mod.wizards.newContentElement.wizardItems.%s.show = *
+                        ',
+                        $sanitizedGroupName,
+                        $groupName,
+                        $sanitizedGroupName
+                    )
+                );
 
-            \TYPO3\CMS\Core\Utility\ExtensionManagementUtility::addPageTSConfig(
-                sprintf(
-                    '
-                    mod.wizards.newContentElement.wizardItems.%s.header = LLL:EXT:master_record/Resources/Private/Language/locallang.xlf:tt_content.tx_masterrecord_tab
-                    mod.wizards.newContentElement.wizardItems.%s.show = *
-                    ',
-                    $groupName,
-                    $groupName
-                )
-            );
-
+            }
 
             foreach ($masterInstances as $masterRecord) {
                 $contentId = 'instanceof_' . $masterRecord['uid'];
+                $sanitizedGroupName = \NamelessCoder\MasterRecord\TcaHelper::sanitizeGroupName($masterRecord['tx_masterrecord_group']);
                 \TYPO3\CMS\Core\Utility\ExtensionManagementUtility::addPageTSConfig(
                     sprintf(
                         '
@@ -43,18 +51,18 @@ defined('TYPO3_MODE') or die('Access denied.');
                         }
                         mod.wizards.newContentElement.wizardItems.%s.show := addToList(%s)
                         ',
-                        $groupName,
+                        $sanitizedGroupName,
                         $contentId,
                         'content-' . $masterRecord['CType'],
                         $masterRecord['rowDescription'] ?: 'An instance of tt_content:' . $masterRecord['uid'],
                         'Inserts an instance of tt_content:' . $masterRecord['uid'] . ' of type ' . $masterRecord['CType'],
                         $masterRecord['CType'],
                         $masterRecord['uid'],
-                        $groupName,
+                        $sanitizedGroupName,
                         $contentId
                     )
                 );
             }
         }
     }
-})();
+})($_EXTCONF);

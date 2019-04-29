@@ -18,8 +18,11 @@
 			<trans-unit id="tt_content.tx_masterrecord_master">
 				<source>Is master record?</source>
 			</trans-unit>
-			<trans-unit id="view.sync.sync_button">
-				<source>Sync selected</source>
+			<trans-unit id="tt_content.tx_masterrecord_group">
+				<source>New content wizard group (tab label)</source>
+			</trans-unit>
+			<trans-unit id="tt_content.tx_masterrecord_group.notshown">
+				<source>Not shown</source>
 			</trans-unit>
 		</body>
 	</file>
