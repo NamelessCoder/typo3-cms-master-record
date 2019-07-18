@@ -49,9 +49,7 @@ class TcaHelper
                             'type' => 'select',
                             'items' => static::getGroupItems(),
                         ],
-                        'displayCond' => [
-                            'FIELD:tx_masterrecord_master:>:0',
-                        ],
+                        'displayCond' => 'FIELD:tx_masterrecord_master:>:0',
                     ],
                 ]
             );

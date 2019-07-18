@@ -70,13 +70,14 @@ class TcaFieldRenderer
         }
 
         $field = '<select class="form-control form-control-adapt" name="' . $parameters['itemFormElName'] . '" id="' . $parameters['itemFormElID'] . '">';
+        $field .= '<option value="0"></option>';
         foreach ($optionGroups as $optionGroup) {
             $field .= '<optgroup label="' . $optionGroup['title'] . '">';
             foreach ($optionGroup['items'] as $option) {
                 $field .= sprintf(
                     '<option value="' . $option['uid'] . '"%s>%s</option>',
                     (int)$option['uid'] === (int)$parameters['itemFormElValue'] ? ' selected="selected"' : '',
-                    BackendUtility::getRecordTitle('tt_content', $masterRecord)
+                    BackendUtility::getRecordTitle('tt_content', $option)
                 );
             }
             $field .= '</optgroup>';
