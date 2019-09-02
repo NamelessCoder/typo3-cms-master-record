@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace NamelessCoder\MasterRecord;
 
+use Doctrine\DBAL\Exception\InvalidFieldNameException;
 use TYPO3\CMS\Backend\Utility\BackendUtility;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
@@ -49,14 +50,18 @@ class TcaFieldRenderer
     {
         $queryBuilder = GeneralUtility::makeInstance(ConnectionPool::class)->getQueryBuilderForTable($parameters['table']);
         $queryBuilder->getRestrictions()->removeAll()->add(GeneralUtility::makeInstance(DeletedRestriction::class));
-        $masterRecords = $queryBuilder->select('*')
-            ->from($parameters['table'])
-            ->where($queryBuilder->expr()->eq('tx_masterrecord_master', $queryBuilder->createNamedParameter(1, \PDO::PARAM_INT)))
-            ->andWhere($queryBuilder->expr()->eq('CType', $queryBuilder->createNamedParameter($parameters['row']['CType'][0] ?? $parameters['row']['CType'], \PDO::PARAM_STR)))
-            ->orderBy('sorting')
-            ->groupBy('pid')
-            ->execute()
-            ->fetchAll();
+        try {
+            $masterRecords = $queryBuilder->select('*')
+                ->from($parameters['table'])
+                ->where($queryBuilder->expr()->eq('tx_masterrecord_master', $queryBuilder->createNamedParameter(1, \PDO::PARAM_INT)))
+                ->andWhere($queryBuilder->expr()->eq('CType', $queryBuilder->createNamedParameter($parameters['row']['CType'][0] ?? $parameters['row']['CType'], \PDO::PARAM_STR)))
+                ->orderBy('sorting')
+                ->groupBy('pid')
+                ->execute()
+                ->fetchAll();
+        } catch (InvalidFieldNameException $exception) {
+            return $exception->getMessage() . ' (' . $exception->getCode() . ')';
+        }
 
         $optionGroups = [];
         foreach ($masterRecords as $masterRecord) {

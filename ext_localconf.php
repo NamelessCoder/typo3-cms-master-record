@@ -9,13 +9,18 @@ defined('TYPO3_MODE') or die('Access denied.');
         $GLOBALS['TYPO3_CONF_VARS']['SC_OPTIONS']['tslib/class.tslib_content.php']['postInit'][] = \NamelessCoder\MasterRecord\Hooks\ContentObjectPostInit::class;
         if (TYPO3_REQUESTTYPE & TYPO3_REQUESTTYPE_BE) {
             $queryBuilder = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(\TYPO3\CMS\Core\Database\ConnectionPool::class)->getQueryBuilderForTable('tt_content');
-            $masterInstances = $queryBuilder->select('*')
-                ->from('tt_content')
-                ->where($queryBuilder->expr()->eq('tx_masterrecord_master', $queryBuilder->createNamedParameter(1, \PDO::PARAM_INT)))
-                ->andWhere($queryBuilder->expr()->in('sys_language_uid', $queryBuilder->createNamedParameter([-1, 0], \Doctrine\DBAL\Connection::PARAM_INT_ARRAY)))
-                ->andWhere($queryBuilder->expr()->neq('tx_masterrecord_group', $queryBuilder->createNamedParameter('', \PDO::PARAM_STR)))
-                ->execute()
-                ->fetchAll();
+            try {
+                $masterInstances = $queryBuilder->select('*')
+                    ->from('tt_content')
+                    ->where($queryBuilder->expr()->eq('tx_masterrecord_master', $queryBuilder->createNamedParameter(1, \PDO::PARAM_INT)))
+                    ->andWhere($queryBuilder->expr()->in('sys_language_uid', $queryBuilder->createNamedParameter([-1, 0], \Doctrine\DBAL\Connection::PARAM_INT_ARRAY)))
+                    ->andWhere($queryBuilder->expr()->neq('tx_masterrecord_group', $queryBuilder->createNamedParameter('', \PDO::PARAM_STR)))
+                    ->execute()
+                    ->fetchAll();
+
+            } catch (\Doctrine\DBAL\Exception\InvalidFieldNameException $exception) {
+                $masterInstances = [];
+            }
 
             $groupNames = array_column($masterInstances, 'tx_masterrecord_group');
             foreach ($groupNames as $groupName) {
