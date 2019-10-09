@@ -14,8 +14,14 @@ class TcaFieldRenderer
 {
     public function renderListOfInstances(array $parameters)
     {
+        $tableName = $parameters['tableName'] ?? $parameters['table'];
+        $databaseRow = $parameters['databaseRow'] ?? $parameters['row'];
         $content = '<h5>Instances</h5>';
-        $generator = GeneralUtility::makeInstance(RecordInsight::class, $parameters['table'], $parameters['row'])->getInstances();
+        $generator = GeneralUtility::makeInstance(
+            RecordInsight::class,
+            $tableName,
+            $databaseRow
+        )->getInstances();
         if (!$generator->valid()) {
             $content .= '<i>No instances exist of this master</i>';
             return $content;
@@ -26,7 +32,7 @@ class TcaFieldRenderer
             $instanceUid = $instanceRecordInsight->readInstanceValue('uid');
             $instancePid = $instanceRecordInsight->readInstanceValue('pid');
             $parameters = [
-                'edit' => [$parameters['table'] => [$instanceUid => 'edit']],
+                'edit' => [$tableName => [$instanceUid => 'edit']],
                 'returnUrl' => $_SERVER['REQUEST_URI'],
             ];
             $uriBuilder = GeneralUtility::makeInstance(UriBuilder::class);
@@ -48,13 +54,20 @@ class TcaFieldRenderer
 
     public function renderMasterInstanceSelector(array $parameters)
     {
-        $queryBuilder = GeneralUtility::makeInstance(ConnectionPool::class)->getQueryBuilderForTable($parameters['table']);
+        $tableName = $parameters['tableName'] ?? $parameters['table'];
+        $databaseRow = $parameters['databaseRow'] ?? $parameters['row'];
+        $formElementName = $parameters['parameterArray']['itemFormElName'] ?? $parameters['itemFormElName'];
+        $formElementId = $parameters['parameterArray']['itemFormElID'] ?? $parameters['itemFormElID'];
+        $formElementValue = $parameters['parameterArray']['itemFormElValue'] ?? $parameters['itemFormElValue'];
+        $formElementChange = $parameters['parameterArray']['fieldChangeFunc'] ?? $parameters['fieldChangeFunc'];
+        $queryBuilder = GeneralUtility::makeInstance(ConnectionPool::class)->getQueryBuilderForTable($tableName);
         $queryBuilder->getRestrictions()->removeAll()->add(GeneralUtility::makeInstance(DeletedRestriction::class));
         try {
             $masterRecords = $queryBuilder->select('*')
-                ->from($parameters['table'])
+                ->from($tableName)
                 ->where($queryBuilder->expr()->eq('tx_masterrecord_master', $queryBuilder->createNamedParameter(1, \PDO::PARAM_INT)))
-                ->andWhere($queryBuilder->expr()->eq('CType', $queryBuilder->createNamedParameter($parameters['row']['CType'][0] ?? $parameters['row']['CType'], \PDO::PARAM_STR)))
+                ->andWhere($queryBuilder->expr()->eq('CType', $queryBuilder->createNamedParameter($databaseRow['CType'][0] ?? $databaseRow['CType'], \PDO::PARAM_STR)))
+                ->orderBy('pid')
                 ->orderBy('sorting')
                 ->execute()
                 ->fetchAll();
@@ -73,21 +86,20 @@ class TcaFieldRenderer
             $optionGroups[$masterRecord['pid']]['items'][] = $masterRecord;
         }
 
-        $field = '<select class="form-control form-control-adapt" name="' . $parameters['itemFormElName'] . '" id="' . $parameters['itemFormElID'] . '">';
+        $field = '<select class="form-control form-control-adapt" name="' . $formElementName . '" id="' . $formElementId . '" onchange="' . $formElementChange . '">';
         $field .= '<option value="0"></option>';
         foreach ($optionGroups as $optionGroup) {
             $field .= '<optgroup label="' . $optionGroup['title'] . '">';
             foreach ($optionGroup['items'] as $option) {
                 $field .= sprintf(
                     '<option value="' . $option['uid'] . '"%s>%s</option>',
-                    (int)$option['uid'] === (int)$parameters['itemFormElValue'] ? ' selected="selected"' : '',
+                    (int)$option['uid'] === (int)$formElementValue ? ' selected="selected"' : '',
                     BackendUtility::getRecordTitle('tt_content', $option)
                 );
             }
             $field .= '</optgroup>';
         }
         $field .= '</select>';
-
         return $field;
     }
 }

@@ -18,23 +18,25 @@ class TcaHelper
                     'displayCond' => 'FIELD:tx_masterrecord_master:<:1',
                     'config' => [
                         'type' => 'user',
+                        'renderType' => 'masterRecordInstanceOf',
                         'userFunc' => TcaFieldRenderer::class . '->renderMasterInstanceSelector',
                     ]
                 ],
                 'tx_masterrecord_master' => [
                     'label' => 'LLL:EXT:master_record/Resources/Private/Language/locallang.xlf:tt_content.tx_masterrecord_master',
+                    'displayCond' => 'FIELD:tx_masterrecord_instanceof:<:1',
                     'config' => [
                         'type' => 'check',
                     ],
-                    'displayCond' => 'FIELD:tx_masterrecord_instanceof:<:1',
                 ],
                 'tx_masterrecord_instances' => [
                     'label' => 'LLL:EXT:master_record/Resources/Private/Language/locallang.xlf:tt_content.tx_masterrecord_instances',
+                    'displayCond' => 'FIELD:tx_masterrecord_master:>:0',
                     'config' => [
                         'type' => 'user',
+                        'renderType' => 'masterRecordInstances',
                         'userFunc' => TcaFieldRenderer::class . '->renderListOfInstances',
                     ],
-                    'displayCond' => 'FIELD:tx_masterrecord_master:>:0',
                 ],
             ]
         );
@@ -45,11 +47,12 @@ class TcaHelper
                 [
                     'tx_masterrecord_group' => [
                         'label' => 'LLL:EXT:master_record/Resources/Private/Language/locallang.xlf:tt_content.tx_masterrecord_group',
+                        'displayCond' => 'FIELD:tx_masterrecord_master:>:0',
                         'config' => [
                             'type' => 'select',
+                            'renderType' => 'selectSingle',
                             'items' => static::getGroupItems(),
                         ],
-                        'displayCond' => 'FIELD:tx_masterrecord_master:>:0',
                     ],
                 ]
             );

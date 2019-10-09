@@ -1,12 +1,32 @@
 <?php
+
 defined('TYPO3_MODE') or die('Access denied.');
 
 (function($conf) {
-    $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['master_record']['setup'] = unserialize($conf);
+
+    if ($conf === null && class_exists(\TYPO3\CMS\Core\Configuration\ExtensionConfiguration::class)) {
+        $conf = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(\TYPO3\CMS\Core\Configuration\ExtensionConfiguration::class)->get('master_record');
+    } else {
+        $conf = unserialize($conf);
+    }
+
+    $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['master_record']['setup'] = $conf;
+
+    $GLOBALS['TYPO3_CONF_VARS']['SYS']['formEngine']['nodeRegistry'][] = [
+        'nodeName' => 'masterRecordInstanceOf',
+        'priority' => 40,
+        'class' => \NamelessCoder\MasterRecord\FormElement\MasterRecordInstanceOf::class,
+    ];
+    $GLOBALS['TYPO3_CONF_VARS']['SYS']['formEngine']['nodeRegistry'][] = [
+        'nodeName' => 'masterRecordInstances',
+        'priority' => 40,
+        'class' => \NamelessCoder\MasterRecord\FormElement\MasterRecordInstances::class,
+    ];
 
     if (!(TYPO3_REQUESTTYPE & TYPO3_REQUESTTYPE_INSTALL) && !empty($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['master_record']['setup']['newContentWizardGroups'])) {
 
         $GLOBALS['TYPO3_CONF_VARS']['SC_OPTIONS']['tslib/class.tslib_content.php']['postInit'][] = \NamelessCoder\MasterRecord\Hooks\ContentObjectPostInit::class;
+
         if (TYPO3_REQUESTTYPE & TYPO3_REQUESTTYPE_BE) {
             $queryBuilder = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(\TYPO3\CMS\Core\Database\ConnectionPool::class)->getQueryBuilderForTable('tt_content');
             try {
