@@ -56,7 +56,6 @@ class TcaFieldRenderer
                 ->where($queryBuilder->expr()->eq('tx_masterrecord_master', $queryBuilder->createNamedParameter(1, \PDO::PARAM_INT)))
                 ->andWhere($queryBuilder->expr()->eq('CType', $queryBuilder->createNamedParameter($parameters['row']['CType'][0] ?? $parameters['row']['CType'], \PDO::PARAM_STR)))
                 ->orderBy('sorting')
-                ->groupBy('pid')
                 ->execute()
                 ->fetchAll();
         } catch (InvalidFieldNameException $exception) {
