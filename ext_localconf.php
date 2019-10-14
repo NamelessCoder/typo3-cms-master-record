@@ -19,7 +19,7 @@ defined('TYPO3_MODE') or die('Access denied.');
     ];
     $GLOBALS['TYPO3_CONF_VARS']['SYS']['formEngine']['nodeRegistry'][] = [
         'nodeName' => 'masterRecordInstances',
-        'priority' => 40,
+        'priority' => 41,
         'class' => \NamelessCoder\MasterRecord\FormElement\MasterRecordInstances::class,
     ];
 
