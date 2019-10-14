@@ -11,8 +11,11 @@ class MasterRecordInstances extends AbstractFormElement
 {
     public function render()
     {
-        return $this->initializeResultArray() + [
-            'html' => GeneralUtility::makeInstance(TcaFieldRenderer::class)->renderMasterInstanceSelector($this->data)
-        ];
+        return array_replace(
+            $this->initializeResultArray(),
+            [
+                'html' => GeneralUtility::makeInstance(TcaFieldRenderer::class)->renderListOfInstances($this->data)
+            ]
+        );
     }
 }
